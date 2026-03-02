@@ -17,10 +17,19 @@ const ttlEl = document.getElementById('ttl')
 const maxReadsEl = document.getElementById('max-reads')
 const saveBtn = document.getElementById('save')
 const savedMsg = document.getElementById('saved-msg')
+const cloudGet = document.getElementById('cloud-get')
+const cloudHint = document.getElementById('cloud-hint')
+const selfhostedHint = document.getElementById('selfhosted-hint')
 
-modeEl.addEventListener('change', () => {
-  urlField.classList.toggle('visible', modeEl.value === 'selfhosted')
-})
+function updateModeUI() {
+  const isSelfHosted = modeEl.value === 'selfhosted'
+  urlField.classList.toggle('visible', isSelfHosted)
+  cloudGet.classList.toggle('hidden', isSelfHosted)
+  cloudHint.style.display = isSelfHosted ? 'none' : 'block'
+  selfhostedHint.classList.toggle('visible', isSelfHosted)
+}
+
+modeEl.addEventListener('change', updateModeUI)
 
 chrome.storage.local.get('settings', ({ settings }) => {
   const s = { ...DEFAULT_SETTINGS, ...settings }
@@ -29,7 +38,7 @@ chrome.storage.local.get('settings', ({ settings }) => {
   apiKeyEl.value = s.apiKey
   ttlEl.value = s.defaultTtl
   maxReadsEl.value = s.defaultMaxReads
-  urlField.classList.toggle('visible', s.mode === 'selfhosted')
+  updateModeUI()
 })
 
 saveBtn.addEventListener('click', () => {

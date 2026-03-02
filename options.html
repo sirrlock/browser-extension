@@ -53,6 +53,24 @@
     .saved.show { opacity: 1; }
     #url-field { display: none; }
     #url-field.visible { display: block; }
+    .key-row { display: flex; gap: 8px; align-items: stretch; }
+    .key-row input { flex: 1; }
+    .key-row a {
+      display: inline-flex; align-items: center; padding: 0 12px;
+      background: #184f8d; color: #fff; border-radius: 8px;
+      font-size: 12px; font-weight: 600; text-decoration: none;
+      white-space: nowrap;
+    }
+    .key-row a:hover { background: #13406f; }
+    #selfhosted-hint { display: none; }
+    #selfhosted-hint.visible {
+      display: block; margin-top: 4px; font-size: 11px;
+      color: #94a3b8; background: #f1f5f9; padding: 8px 10px;
+      border-radius: 6px; border-left: 3px solid #184f8d;
+    }
+    #selfhosted-hint code { font-size: 11px; background: #e2e8f0; padding: 1px 4px; border-radius: 3px; }
+    #cloud-get { }
+    #cloud-get.hidden { display: none; }
   </style>
 </head>
 <body>
@@ -76,8 +94,14 @@
       <p class="hint">The base URL of your Sirr instance (sirrd)</p>
     </div>
     <label for="api-key">API Key</label>
-    <input type="password" id="api-key" placeholder="Your SIRR_API_KEY">
-    <p class="hint">Required for storing secrets. Get one from your Sirr instance or sirrlock.com dashboard.</p>
+    <div class="key-row">
+      <input type="password" id="api-key" placeholder="Your SIRR_API_KEY">
+      <a id="cloud-get" href="https://sirrlock.com/keys" target="_blank">Get</a>
+    </div>
+    <p class="hint" id="cloud-hint">Required for storing secrets. Get one from your sirrlock.com dashboard.</p>
+    <div id="selfhosted-hint">
+      Your API key is printed in the server logs when <code>sirrd</code> starts. Look for <code>SIRR_API_KEY=...</code> in the startup output.
+    </div>
   </fieldset>
 
   <fieldset>

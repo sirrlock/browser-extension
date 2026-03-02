@@ -170,9 +170,19 @@ async function rebuildContextMenu() {
 
 // ─── Event Handlers ─────────────────────────────────────
 
-chrome.runtime.onInstalled.addListener(async () => {
+chrome.runtime.onInstalled.addListener(async (details) => {
   await rebuildContextMenu()
   await updateBadge()
+
+  // Open options on first install so user can configure API key
+  if (details.reason === 'install') {
+    chrome.runtime.openOptionsPage()
+  }
+})
+
+// Clicking the extension icon opens options (no popup configured)
+chrome.action.onClicked.addListener(() => {
+  chrome.runtime.openOptionsPage()
 })
 
 chrome.runtime.onStartup.addListener(async () => {
@@ -194,6 +204,17 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     const preview = formatPreview(selectedText)
     const timestamp = Math.floor(Date.now() / 1000)
     const key = `ext_${hostname}_${timestamp}`
+
+    const settings = await getSettings()
+    if (!settings.apiKey) {
+      chrome.tabs.sendMessage(tab.id, {
+        action: 'notify',
+        message: 'API key required. Opening settings...',
+        isError: true,
+      })
+      chrome.runtime.openOptionsPage()
+      return
+    }
 
     const stored = await storeSecret(key, selectedText)
     if (!stored) {
