@@ -34,7 +34,7 @@ modeEl.addEventListener('change', updateModeUI)
 chrome.storage.local.get('settings', ({ settings }) => {
   const s = { ...DEFAULT_SETTINGS, ...settings }
   modeEl.value = s.mode
-  sirrUrlEl.value = s.mode === 'selfhosted' ? s.sirrUrl : ''
+  sirrUrlEl.value = s.mode === 'selfhosted' ? s.sirrUrl : 'http://0.0.0.0:39999'
   apiKeyEl.value = s.apiKey
   ttlEl.value = s.defaultTtl
   maxReadsEl.value = s.defaultMaxReads
@@ -46,7 +46,7 @@ saveBtn.addEventListener('click', () => {
   const settings = {
     mode,
     sirrUrl: mode === 'selfhosted'
-      ? sirrUrlEl.value.replace(/\/+$/, '')
+      ? (sirrUrlEl.value.trim().replace(/\/+$/, '') || 'http://0.0.0.0:39999')
       : 'https://sirr.sirrlock.com',
     apiKey: apiKeyEl.value.trim(),
     defaultTtl: Math.max(60, parseInt(ttlEl.value, 10) || 86400),
