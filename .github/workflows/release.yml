@@ -1,0 +1,103 @@
+name: Test, Pack and Release
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run unit tests
+        run: node --test
+
+  release:
+    needs: [test]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set version
+        run: |
+          MAJOR_MINOR=$(jq -r '.version' package.json | cut -d. -f1,2)
+          VERSION="${MAJOR_MINOR}.${{ github.run_number }}"
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          jq --arg v "$VERSION" '.version = $v' manifest.json > manifest.tmp && mv manifest.tmp manifest.json
+          jq --arg v "$VERSION" '.version = $v' manifest.firefox.json > manifest.tmp && mv manifest.tmp manifest.firefox.json
+
+      - name: Pack Chrome extension
+        run: |
+          mkdir -p dist build-chrome
+          cp manifest.json build-chrome/
+          cp -r background.js content.js options.html options.js token-detect.js icons build-chrome/
+          cd build-chrome && zip -r ../dist/sirr-chrome-v${VERSION}.zip . && cd ..
+          rm -rf build-chrome
+
+      - name: Pack Firefox extension
+        run: |
+          mkdir -p build-firefox
+          cp manifest.firefox.json build-firefox/manifest.json
+          cp -r background.js content.js options.html options.js token-detect.js icons build-firefox/
+          cd build-firefox && zip -r ../dist/sirr-firefox-v${VERSION}.zip . && cd ..
+          rm -rf build-firefox
+
+      - name: Generate changelog
+        run: |
+          PREV_TAG=$(git tag --sort=-v:refname | head -1)
+          if [ -z "$PREV_TAG" ]; then
+            RANGE="HEAD"
+          else
+            RANGE="${PREV_TAG}..HEAD"
+          fi
+
+          FEATURES=$(git log "$RANGE" --pretty=format:'%s' | grep -E '^feat' | sed 's/^/- /' || true)
+          FIXES=$(git log "$RANGE" --pretty=format:'%s' | grep -E '^fix' | sed 's/^/- /' || true)
+          OTHER=$(git log "$RANGE" --pretty=format:'%s' | grep -vE '^(feat|fix)' | sed 's/^/- /' || true)
+
+          {
+            echo "CHANGELOG<<CHANGES_EOF"
+            if [ -n "$FEATURES" ]; then
+              echo "### Features"
+              echo "$FEATURES"
+              echo ""
+            fi
+            if [ -n "$FIXES" ]; then
+              echo "### Fixes"
+              echo "$FIXES"
+              echo ""
+            fi
+            if [ -n "$OTHER" ]; then
+              echo "### Other"
+              echo "$OTHER"
+              echo ""
+            fi
+            echo "CHANGES_EOF"
+          } >> $GITHUB_ENV
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ env.VERSION }}
+          name: v${{ env.VERSION }}
+          body: |
+            ## Sirr Browser Extension v${{ env.VERSION }}
+
+            ${{ env.CHANGELOG }}
+
+            ### Downloads
+            - **Chrome**: `sirr-chrome-v${{ env.VERSION }}.zip` — Load via `chrome://extensions` (Developer mode → Load unpacked)
+            - **Firefox**: `sirr-firefox-v${{ env.VERSION }}.zip` — Load via `about:debugging` → This Firefox → Load Temporary Add-on
+          files: |
+            dist/sirr-chrome-v${{ env.VERSION }}.zip
+            dist/sirr-firefox-v${{ env.VERSION }}.zip
