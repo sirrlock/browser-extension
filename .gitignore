@@ -1,0 +1,15 @@
+.DS_Store
+*.zip
+*.crx
+*.pem
+node_modules/
+dist/
+build-firefox/
+
+# IDE
+.idea/
+
+# Local dev
+.claude/
+.worktrees/
+.playwright-mcp/

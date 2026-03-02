@@ -1,0 +1,31 @@
+# Sirr Browser Extension
+
+Manifest V3 WebExtension for Chrome and Firefox.
+Store selected text as ephemeral Sirr secrets. Paste and burn secrets into input fields.
+
+## Install
+
+Chrome: Download sirr-chrome-*.zip from releases → chrome://extensions → Load unpacked
+Firefox: Download sirr-firefox-*.zip → about:debugging → Load Temporary Add-on
+
+## Usage
+
+Store: Select text on any page → right-click → "Store to Sirr"
+Paste: Right-click an input field → "Sirr" → select secret → fills in, burns after read
+
+## Settings (click extension icon → Options)
+
+- Mode: sirrlock.com (cloud) or self-hosted
+- API Key: Your Sirr API key
+- Organization ID: (optional) Routes to /orgs/{id}/secrets for multi-tenant
+- Default TTL: How long secrets live (default: 24h)
+- Default max reads: Read limit before burn (default: 1)
+
+## Token Detection
+
+Automatically detects token types from selected text: GitHub (ghp_), AWS (AKIA),
+OpenAI (sk-), and others. Uses detected type as secret label.
+
+## Source
+
+github.com/sirrlock/sirr-extension
