@@ -76,10 +76,23 @@
 <body>
   <h1>Sirr Extension</h1>
   <p class="subtitle">
-    Ephemeral secrets manager.
+    Ephemeral secrets manager &mdash; every secret has a TTL, a read limit, or both. No stale secrets.<br>
     <a href="https://sirr.dev" target="_blank">sirr.dev</a> &middot;
     <a href="https://sirrlock.com" target="_blank">sirrlock.com</a>
   </p>
+
+  <fieldset>
+    <legend>How it works</legend>
+    <p style="font-size: 12px; color: #475569; line-height: 1.6;">
+      Select text on any page, right-click <strong>"Store to Sirr"</strong> &mdash; the secret is encrypted and stored on the server.
+      Right-click an input field, pick a secret from the <strong>"Sirr"</strong> menu &mdash; the value fills in and the secret is burned forever.
+    </p>
+    <p style="font-size: 12px; color: #475569; line-height: 1.6; margin-top: 8px;">
+      <strong>Cloud (sirrlock.com)</strong> &mdash; managed API, no server to run. Create an API key at
+      <a href="https://sirrlock.com/keys" target="_blank" style="color: #184f8d;">sirrlock.com/keys</a>.<br>
+      <strong>Self-hosted</strong> &mdash; run <code style="font-size: 11px; background: #e2e8f0; padding: 1px 4px; border-radius: 3px;">sirrd</code> on your own infrastructure. Your secrets never leave your network.
+    </p>
+  </fieldset>
 
   <fieldset>
     <legend>Connection</legend>
@@ -90,8 +103,8 @@
     </select>
     <div id="url-field">
       <label for="sirr-url">Sirr Server URL</label>
-      <input type="text" id="sirr-url" placeholder="http://localhost:5839">
-      <p class="hint">The base URL of your Sirr instance (sirrd)</p>
+      <input type="text" id="sirr-url" placeholder="http://0.0.0.0:39999">
+      <p class="hint">The base URL of your Sirr instance (sirrd). Default port is 39999.</p>
     </div>
     <label for="api-key">API Key</label>
     <div class="key-row">
@@ -116,6 +129,11 @@
 
   <button id="save">Save settings</button>
   <span class="saved" id="saved-msg">Saved!</span>
+
+  <p style="margin-top: 24px; font-size: 11px; color: #94a3b8; text-align: center;">
+    Thank you for using Sirr. Questions or feedback?
+    <a href="https://github.com/sirrlock/browser-extension/issues" target="_blank" style="color: #184f8d; text-decoration: none;">Open an issue</a>.
+  </p>
 
   <script src="options.js"></script>
 </body>
