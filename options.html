@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Sirr Extension Settings</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 14px;
+      color: #0f172a;
+      background: #f6f7f8;
+      padding: 24px;
+      min-width: 400px;
+    }
+    h1 { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+    .subtitle { font-size: 12px; color: #64748b; margin-bottom: 20px; }
+    .subtitle a { color: #184f8d; text-decoration: none; }
+    .subtitle a:hover { text-decoration: underline; }
+    fieldset {
+      border: 1px solid #e2e8f0; border-radius: 12px;
+      padding: 16px; margin-bottom: 16px; background: #fff;
+    }
+    legend {
+      font-size: 12px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.05em; color: #475569; padding: 0 6px;
+    }
+    label {
+      display: block; font-size: 12px; font-weight: 500;
+      color: #475569; margin-bottom: 4px; margin-top: 12px;
+    }
+    label:first-of-type { margin-top: 8px; }
+    input[type="text"], input[type="password"], input[type="number"], select {
+      width: 100%; padding: 8px 10px; border: 1px solid #e2e8f0;
+      border-radius: 8px; font-size: 13px; color: #0f172a;
+      background: #f6f7f8; outline: none;
+    }
+    input:focus, select:focus {
+      border-color: #184f8d;
+      box-shadow: 0 0 0 2px rgba(24,79,141,0.15);
+    }
+    .hint { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+    button {
+      margin-top: 16px; padding: 8px 20px; background: #184f8d;
+      color: #fff; border: none; border-radius: 8px;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+    }
+    button:hover { background: #13406f; }
+    .saved {
+      display: inline-block; margin-left: 10px; font-size: 12px;
+      color: #10b981; font-weight: 500; opacity: 0; transition: opacity 0.3s;
+    }
+    .saved.show { opacity: 1; }
+    #url-field { display: none; }
+    #url-field.visible { display: block; }
+    .key-row { display: flex; gap: 8px; align-items: stretch; }
+    .key-row input { flex: 1; }
+    .key-row a {
+      display: inline-flex; align-items: center; padding: 0 12px;
+      background: #184f8d; color: #fff; border-radius: 8px;
+      font-size: 12px; font-weight: 600; text-decoration: none;
+      white-space: nowrap;
+    }
+    .key-row a:hover { background: #13406f; }
+    #selfhosted-hint { display: none; }
+    #selfhosted-hint.visible {
+      display: block; margin-top: 4px; font-size: 11px;
+      color: #94a3b8; background: #f1f5f9; padding: 8px 10px;
+      border-radius: 6px; border-left: 3px solid #184f8d;
+    }
+    #selfhosted-hint code { font-size: 11px; background: #e2e8f0; padding: 1px 4px; border-radius: 3px; }
+    #cloud-get { }
+    #cloud-get.hidden { display: none; }
+  </style>
+</head>
+<body>
+  <h1>Sirr Extension</h1>
+  <p class="subtitle">
+    Ephemeral secrets manager &mdash; every secret has a TTL, a read limit, or both. No stale secrets.<br>
+    <a href="https://sirr.dev" target="_blank">sirr.dev</a> &middot;
+    <a href="https://sirrlock.com" target="_blank">sirrlock.com</a>
+  </p>
+
+  <fieldset>
+    <legend>How it works</legend>
+    <p style="font-size: 12px; color: #475569; line-height: 1.6;">
+      Select text on any page, right-click <strong>"Store to Sirr"</strong> &mdash; the secret is encrypted and stored on the server.
+      Right-click an input field, pick a secret from the <strong>"Sirr"</strong> menu &mdash; the value fills in and the secret is burned forever.
+    </p>
+    <p style="font-size: 12px; color: #475569; line-height: 1.6; margin-top: 8px;">
+      <strong>Cloud (sirrlock.com)</strong> &mdash; managed API, no server to run. Create an API key at
+      <a href="https://sirrlock.com/keys" target="_blank" style="color: #184f8d;">sirrlock.com/keys</a>.<br>
+      <strong>Self-hosted</strong> &mdash; run <code style="font-size: 11px; background: #e2e8f0; padding: 1px 4px; border-radius: 3px;">sirrd</code> on your own infrastructure. Your secrets never leave your network.
+    </p>
+  </fieldset>
+
+  <fieldset>
+    <legend>Connection</legend>
+    <label for="mode">Mode</label>
+    <select id="mode">
+      <option value="cloud">sirrlock.com (cloud)</option>
+      <option value="selfhosted">Self-hosted</option>
+    </select>
+    <div id="url-field">
+      <label for="sirr-url">Sirr Server URL</label>
+      <input type="text" id="sirr-url" placeholder="http://0.0.0.0:39999">
+      <p class="hint">The base URL of your Sirr instance (sirrd). Default port is 39999.</p>
+    </div>
+    <label for="api-key">API Key</label>
+    <div class="key-row">
+      <input type="password" id="api-key" placeholder="Your SIRR_API_KEY">
+      <a id="cloud-get" href="https://sirrlock.com/keys" target="_blank">Get</a>
+    </div>
+    <p class="hint" id="cloud-hint">Required for storing secrets. Get one from your sirrlock.com dashboard.</p>
+    <div id="selfhosted-hint">
+      Your API key is printed in the server logs when <code>sirrd</code> starts. Look for <code>SIRR_API_KEY=...</code> in the startup output.
+    </div>
+    <label for="org">Organization ID (optional, for multi-tenant)</label>
+    <input type="text" id="org" placeholder="Leave empty for public bucket">
+    <p class="hint">Routes secrets to <code>/orgs/{id}/secrets</code> instead of <code>/secrets</code>.</p>
+  </fieldset>
+
+  <fieldset>
+    <legend>Defaults</legend>
+    <label for="ttl">Default TTL (seconds)</label>
+    <input type="number" id="ttl" min="60" max="604800" value="86400">
+    <p class="hint">How long secrets live. 86400 = 24 hours.</p>
+    <label for="max-reads">Default max reads</label>
+    <input type="number" id="max-reads" min="1" max="100" value="1">
+    <p class="hint">Number of reads before the secret is burned.</p>
+  </fieldset>
+
+  <button id="save">Save settings</button>
+  <span class="saved" id="saved-msg">Saved!</span>
+
+  <p style="margin-top: 24px; font-size: 11px; color: #94a3b8; text-align: center;">
+    Thank you for using Sirr. Questions or feedback?
+    <a href="https://github.com/sirrlock/browser-extension/issues" target="_blank" style="color: #184f8d; text-decoration: none;">Open an issue</a>.
+  </p>
+
+  <script src="options.js"></script>
+</body>
+</html>
