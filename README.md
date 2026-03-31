@@ -20,21 +20,21 @@ Right-click to store and paste ephemeral secrets via [Sirr](https://github.com/s
 
 ## Usage
 
-- **Store:** Select text on any page → right-click → "Store to Sirr"
-- **Paste:** Right-click an input field → "Sirr" → click a secret → value fills in, secret burns
+- **Store:** Select text on any page → right-click → "Store to Sirr" → sends value-only to `POST /secrets` → server returns a hex ID and shareable URL
+- **Paste:** Right-click an input field → "Sirr" → click a secret → value is fetched by ID (`GET /secrets/{id}`), fills in, and the secret burns
+
+No API key is required for public push/read operations. The extension stores the server-generated hex ID locally for retrieval.
 
 ## Settings
 
 Click the extension icon → Options to configure:
 - **Mode:** sirrlock.com (cloud) or self-hosted
-- **API Key:** Your Sirr API key
+- **API Key:** (optional) Only needed for org-scoped or authenticated endpoints
 - **Organization ID:** (optional) Routes secrets to `/orgs/{id}/secrets` for multi-tenant deployments
 - **Default TTL:** How long secrets live (default: 24h)
 - **Default max reads:** Read limit before burn (default: 1)
 
-### Multi-Tenant / Org Mode
-
-If your Sirr server runs in multi-tenant mode, set the **Organization ID** in settings. This routes all API calls through `/orgs/{id}/secrets` instead of `/secrets`. Leave it empty for the default public bucket.
+Public push and read operations work without an API key or org ID.
 
 ## Project Structure
 
