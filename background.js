@@ -67,32 +67,21 @@ function formatPreview(value) {
   return value.slice(0, 6) + '...'
 }
 
-function secretsUrl(settings, key) {
+function secretsUrl(settings, id) {
   const base = settings.sirrUrl.replace(/\/+$/, '')
-  if (settings.org) {
-    return key ? `${base}/orgs/${settings.org}/secrets/${key}` : `${base}/orgs/${settings.org}/secrets`
-  }
-  return key ? `${base}/secrets/${key}` : `${base}/secrets`
+  return id ? `${base}/secrets/${id}` : `${base}/secrets`
 }
 
 // ─── Sirr API ───────────────────────────────────────────
 
-async function storeSecret(key, value) {
+async function storeSecret(value) {
   const settings = await getSettings()
-  if (!settings.apiKey) {
-    console.error('[Sirr] No API key configured. Open extension options.')
-    return null
-  }
   const url = secretsUrl(settings)
   try {
     const res = await fetch(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${settings.apiKey}`,
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        key,
         value,
         ttl_seconds: settings.defaultTtl,
         max_reads: settings.defaultMaxReads,
@@ -102,16 +91,17 @@ async function storeSecret(key, value) {
       console.error(`[Sirr] Store failed: ${res.status}`)
       return null
     }
-    return key
+    const data = await res.json()
+    return data.id ?? null
   } catch (err) {
     console.error('[Sirr] Store error:', err)
     return null
   }
 }
 
-async function readSecret(key) {
+async function readSecret(id) {
   const settings = await getSettings()
-  const url = secretsUrl(settings, encodeURIComponent(key))
+  const url = secretsUrl(settings, encodeURIComponent(id))
   try {
     const res = await fetch(url)
     if (!res.ok) return null
@@ -123,15 +113,11 @@ async function readSecret(key) {
   }
 }
 
-async function burnSecret(key) {
+async function burnSecret(id) {
   const settings = await getSettings()
-  if (!settings.apiKey) return false
-  const url = secretsUrl(settings, encodeURIComponent(key))
+  const url = secretsUrl(settings, encodeURIComponent(id))
   try {
-    const res = await fetch(url, {
-      method: 'DELETE',
-      headers: { 'Authorization': `Bearer ${settings.apiKey}` },
-    })
+    const res = await fetch(url, { method: 'DELETE' })
     return res.ok || res.status === 404
   } catch (err) {
     console.error('[Sirr] Burn error:', err)
@@ -168,7 +154,7 @@ async function rebuildContextMenu() {
   } else {
     for (const secret of secrets) {
       chrome.contextMenus.create({
-        id: `sirr-paste-${secret.key}`,
+        id: `sirr-paste-${secret.id}`,
         parentId: 'sirr-paste-parent',
         title: `${secret.hostname} — ${secret.type} (${secret.preview})`,
         contexts: ['editable'],
@@ -183,7 +169,7 @@ chrome.runtime.onInstalled.addListener(async (details) => {
   await rebuildContextMenu()
   await updateBadge()
 
-  // Open options on first install so user can configure API key
+  // Open options on first install so user can configure the server URL
   if (details.reason === 'install') {
     chrome.runtime.openOptionsPage()
   }
@@ -212,21 +198,9 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     const type = detectTokenType(selectedText)
     const preview = formatPreview(selectedText)
     const timestamp = Math.floor(Date.now() / 1000)
-    const key = `ext_${hostname}_${timestamp}`
 
-    const settings = await getSettings()
-    if (!settings.apiKey) {
-      chrome.tabs.sendMessage(tab.id, {
-        action: 'notify',
-        message: 'API key required. Opening settings...',
-        isError: true,
-      })
-      chrome.runtime.openOptionsPage()
-      return
-    }
-
-    const stored = await storeSecret(key, selectedText)
-    if (!stored) {
+    const id = await storeSecret(selectedText)
+    if (!id) {
       chrome.tabs.sendMessage(tab.id, {
         action: 'notify',
         message: 'Failed to store secret. Check extension settings.',
@@ -236,7 +210,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     }
 
     const secrets = await getSecrets()
-    secrets.push({ key, hostname, type, preview, createdAt: timestamp })
+    secrets.push({ id, hostname, type, preview, createdAt: timestamp })
     await saveSecrets(secrets)
     await rebuildContextMenu()
     await updateBadge()
@@ -249,9 +223,9 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   }
 
   if (info.menuItemId.startsWith('sirr-paste-')) {
-    const secretKey = info.menuItemId.replace('sirr-paste-', '')
+    const secretId = info.menuItemId.replace('sirr-paste-', '')
 
-    const value = await readSecret(secretKey)
+    const value = await readSecret(secretId)
     if (!value) {
       chrome.tabs.sendMessage(tab.id, {
         action: 'notify',
@@ -259,7 +233,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
         isError: true,
       })
       const secrets = await getSecrets()
-      await saveSecrets(secrets.filter((s) => s.key !== secretKey))
+      await saveSecrets(secrets.filter((s) => s.id !== secretId))
       await rebuildContextMenu()
       await updateBadge()
       return
@@ -267,11 +241,11 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 
     chrome.tabs.sendMessage(tab.id, { action: 'fill', value })
 
-    await burnSecret(secretKey)
+    await burnSecret(secretId)
 
     const secrets = await getSecrets()
-    const meta = secrets.find((s) => s.key === secretKey)
-    await saveSecrets(secrets.filter((s) => s.key !== secretKey))
+    const meta = secrets.find((s) => s.id === secretId)
+    await saveSecrets(secrets.filter((s) => s.id !== secretId))
     await rebuildContextMenu()
     await updateBadge()
 
